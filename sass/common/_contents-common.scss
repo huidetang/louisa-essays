@@ -1,15 +1,17 @@
+@use "../variable/a5-tate-no-bleed";
+
 @charset "UTF-8";
 
 /* 著作者 */
 .author {
   display: block;
-  font-size: $base-font-size;
+  font-size: a5-tate-no-bleed.$base-font-size;
   font-weight: bold;
   text-align: end;
 }
 
 img {
-  image-resolution: 350dpi;
+  image-resolution: 300dpi;
 }
 
 p > img, div > img, section > img {
@@ -32,7 +34,7 @@ p > img, div > img, section > img {
 
   /* 3行あける */
 .line-03 {
-  margin-block-start: $base-line-height * 3;
+  margin-block-start: a5-tate-no-bleed.$base-line-height * 3;
 }
   
 /* インデント解除 */
@@ -47,7 +49,7 @@ pre {
   -webkit-writing-mode: horizontal-tb;
   -epub-writing-mode: horizontal-tb;
   font-size: 6.5px;
-  width: $content-width * 0.9;
+  width: a5-tate-no-bleed.$content-width * 0.9;
   margin: 0 auto;
   padding: 1rem;
   box-decoration-break: clone;
@@ -70,8 +72,8 @@ div.note, div.memo, div.tip, div.info, div.warning, div.important, div.caution, 
 
 /* リスト */
 ul, ol {
-  margin-block-start: $base-line-height;
-  margin-block-end: $base-line-height;
+  margin-block-start: a5-tate-no-bleed.$base-line-height;
+  margin-block-end: a5-tate-no-bleed.$base-line-height;
   padding-inline-start: 1.5em;
   margin-top: 1rem;
   margin-bottom: 1rem;
@@ -95,18 +97,19 @@ ol.cite-items {
 
 /* 定義リスト */
 dl {
-  display: flex;
-  flex-wrap: wrap;
-
+  width: 100%;
   dt {
+    width: 18%;
     font-weight: 700;
+    float: left;
     &::after {
       content: ": ";
     }
   }
     
   dd {
-    width: 100%;
+    margin-left: 20%;
+    width: 80%;
   }
 }
 

@@ -2,17 +2,17 @@
 # 元々の設定ファイルから項目を継承する
 inherit: ["config.yml"]
 
+# 印刷所の名前は設定しない
+
 # 横書き
 direction: "ltr"
 
-# 印刷所の名前を設定する
-prt: ○○印刷所
-
 # 表紙と裏表紙は作らない
+# cover: cover.xhtml
 cover: false
-
-# 裏表紙を作る
-# backcover: backcover.xhtml
+# coverimage: frontcover.png
+# epubmaker:
+#   cover_linear: yes
 
 # 大扉は画像で作る
 titlepage: false

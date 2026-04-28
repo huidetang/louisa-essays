@@ -1,0 +1,234 @@
+# 全HTML変換後に索引をソートしてHTMLファイルを作成する
+require 'cgi'
+require 'pstore'
+
+class HookIndex
+  def initialize
+    # 利用css
+    @stylesheet = ['style.css']
+    # リンクマーク
+    @linkmark = '□'
+    # mecab利用
+    @makeindex_mecab = true
+    # 辞書ファイル
+    @makeindex_dic = nil
+    # mecabオプション
+    @makeindex_mecab_opts = '-Oyomi'
+    # upmendexオプション
+    @makeindex_options = "-f -r -s #{__dir__}/mendex_html.ist"
+    # HTMLファイル拡張子
+    @htmlext = 'xhtml'
+
+    @metachars = {
+      '{' => '\{',
+      '}' => '\}',
+      '\\' => '◆backslash◆'
+    }
+    @metachars_re = /[#{Regexp.escape(@metachars.keys.join(''))}]/u
+    @metachars_invert = @metachars.invert
+  end
+
+  def setup_index
+    @index_db = {}
+    @index_mecab = nil
+    @index_db = load_idxdb(File.join(__dir__, @makeindex_dic)) if @makeindex_dic
+
+    return true unless @makeindex_mecab
+
+    begin
+      begin
+        require 'MeCab'
+      rescue LoadError
+        require 'mecab'
+      end
+      require 'nkf'
+      @index_mecab = MeCab::Tagger.new(@makeindex_mecab_opts)
+    rescue LoadError
+      warn 'not found MeCab'
+    end
+  end
+
+  def load_idxdb(file)
+    table = {}
+    File.foreach(file) do |line|
+      key, value = *line.strip.split(/\t+/, 2)
+      table[key] = value
+    end
+    table
+  end
+
+  def escape(str)
+    str.gsub(@metachars_re) { |s| @metachars[s] or raise "unknown trans char: #{s}" }
+  end
+
+  def escape_index(str)
+    str.gsub(/[@!|"]/) { |s| '"' + s }
+  end
+
+  def escape_mendex_key(str)
+    str.gsub('"|', '｜').tr('{', '\{').tr('}', '\}')
+  end
+
+  def escape_mendex_display(str)
+    str.gsub('\\{', '◆｛◆').gsub('\\}', '◆｝◆')
+  end
+
+  def modify_label(str)
+    sa = str.split('<<>>')
+    sa.map! do |item|
+      item = item.gsub('&lt;', '<').gsub('&gt;', '>').gsub('&amp;', '&').gsub('&#45;', '-')
+      if @index_db[item]
+        escape_mendex_key(escape_index(@index_db[item])) + '@' + escape_mendex_display(escape_index(escape(item)))
+      elsif item =~ /\A[[:ascii:]]+\Z/ || @index_mecab.nil?
+        esc_item = escape_mendex_display(escape_index(escape(item)))
+        if esc_item == item
+          esc_item
+        else
+          "#{escape_mendex_key(escape_index(item))}@#{esc_item}"
+        end
+      else
+        yomi = NKF.nkf('-w --hiragana', @index_mecab.parse(item).force_encoding('UTF-8').chomp)
+        escape_mendex_key(escape_index(yomi)) + '@' + escape_mendex_display(escape_index(escape(item)))
+      end
+    end
+    sa.join('!')
+  end
+
+  def main(argv, header = true)
+    return true unless File.exist?(File.join(__dir__, '_RVIDX_index_raw.txt'))
+
+    setup_index
+    File.open(File.join(__dir__, '_RVIDX_index_raw.txt')) do |fi|
+      File.open(File.join(argv[0], '_RVIDX_index.tex'), 'w') do |fw|
+        fi.each_line do |l|
+          label, nmbl = l.chomp.split("\t")
+          fw.puts "\\indexentry{#{modify_label(label)}}{#{nmbl}}"
+        end
+      end
+    end
+    # _RVIDX_index.indは中間ファイルなのでARGV[0]内で完結させてもいいのだが、確認したいときも多そうなので作業フォルダに書き出すようにしておく
+    Dir.chdir(__dir__) do
+      system("upmendex #{@makeindex_options} #{File.join(argv[0], '_RVIDX_index.tex')} -o _RVIDX_index.ind")
+    end
+    raise '索引作成に失敗 (おそらく辞書読み失敗)' unless File.exist?(File.join(__dir__, '_RVIDX_index.ind'))
+
+    write_index_html(argv, File.join(__dir__, '_RVIDX_index.ind'), header)
+    add_index_to_toc_file if header
+  end
+
+  def write_index_html(argv, srcind, header = true)
+    File.open(File.join(argv[0], '_rv_index.xhtml'), 'w') do |fw|
+      if header
+        fw.puts <<~EOT
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE html>
+          <html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" xmlns:ops="http://www.idpf.org/2007/ops" xml:lang="ja">
+          <head>
+            <meta charset="UTF-8" />
+        EOT
+
+        @stylesheet.each do |sty|
+          fw.puts <<EOT
+  <link rel="stylesheet" type="text/css" href="#{sty}" />
+EOT
+        end
+
+        fw.puts <<~EOT
+            <meta name="generator" content="Re:VIEW" />
+            <title>索引</title>
+          </head>
+          <body>
+          <div class="rv_index">
+          <h1>索引</h1>
+        EOT
+      end
+
+      parse_ind(srcind, fw)
+
+      if header
+        fw.puts <<~EOT
+          </div>
+          </body>
+          </html>
+        EOT
+      end
+    end
+  end
+
+  def parse_ind(srcind, fw)
+    # indを解析して書き出し。レベル解析が怪しめ
+    idx = 0
+
+    db = PStore.new('_RVIDX_store.pstore')
+    catalog = nil
+    db.transaction do
+      catalog = db['catalog']
+    end
+
+    File.open(srcind) do |fi|
+      fi.each_line do |l|
+        l = l.chomp.gsub('◆｛◆', '{').gsub('◆｝◆', '}').gsub('◆backslash◆', '\\')
+             .gsub(/(\d{3})_(\d{4})/) do
+          "#{catalog[::Regexp.last_match(1).to_i]}.#{@htmlext}#_RVIDX_#{::Regexp.last_match(2)}"
+        end
+
+        case l
+        when /■H■(.+)/ # 見出し
+          label = ::Regexp.last_match(1)
+          if idx > 0
+            1.upto(idx).each { fw.puts '</li></ul>' }
+            idx = 0
+          end
+          l = "<h2>#{CGI.escape_html(label)}</h2>"
+        when /■L1■(.+)/ # レベル1索引
+          labelp = ::Regexp.last_match(1)
+          if idx == 0
+            fw.puts '<ul>'
+          elsif idx > 1
+            2.upto(idx).each { fw.puts '</li></ul>' }
+            idx = 1
+          end
+          fw.puts '</li>' if idx > 0
+          idx = 1
+          l = make_line(labelp)
+        when /■L2■(.+)/ # レベル2索引
+          labelp = ::Regexp.last_match(1)
+          if idx == 1
+            fw.puts '<ul>'
+          elsif idx > 2
+            3.upto(idx).each { fw.puts '</li></ul>' }
+            idx = 2
+          end
+          fw.puts '</li>' if idx > 1
+          idx = 2
+          l = make_line(labelp)
+        when /■L3■(.+)/ # レベル3索引
+          labelp = ::Regexp.last_match(1)
+          fw.puts '<ul>' if idx == 2
+          fw.puts '</li>' if idx > 2
+          idx = 3
+          l = make_line(labelp)
+        end
+        fw.puts l
+      end
+    end
+
+    return unless idx > 0
+
+    1.upto(idx).each { fw.puts '</li></ul>' }
+  end
+
+  def make_line(labelp)
+    label, nmbls = labelp.split("\t", 2)
+    nmbl_array = nmbls.split(/, /).map do |nmbl|
+      %(<span class="rv_index_nmbl"><a href="#{nmbl}">#{@linkmark}</a></span>)
+    end
+    l = %(<li><span class="rv_index_label">#{CGI.escape_html(label)}</span><span class="rv_index_delimiter">...</span>#{nmbl_array.join('<span class="rv_index_nmbl_delimiter">, </span>')})
+  end
+
+  def add_index_to_toc_file
+    File.open(File.join(ARGV[0], 'toc-html.txt'), 'a') do |f|
+      f.puts %(1\t_rv_index.xhtml\t索引\tchaptype=post)
+    end
+  end
+end

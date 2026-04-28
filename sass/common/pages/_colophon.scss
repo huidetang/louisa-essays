@@ -1,3 +1,5 @@
+@use "../../variable/a5-tate-no-bleed";
+
 @charset "UTF-8";
 
 /* 奥付 */
@@ -9,12 +11,12 @@
   writing-mode: horizontal-tb;
 
   & > .colophon-content {
-    width: $paper-width - $nodo - $nodo;
-    height: $paper-height - $ten - $chi;
-    margin-left: $nodo;
-    margin-right: $nodo;
-    margin-top: $ten;
-    margin-bottom: $chi;
+    width: a5-tate-no-bleed.$paper-width - a5-tate-no-bleed.$nodo - a5-tate-no-bleed.$nodo;
+    height: a5-tate-no-bleed.$paper-height - a5-tate-no-bleed.$ten - a5-tate-no-bleed.$chi;
+    margin-left: a5-tate-no-bleed.$nodo;
+    margin-right: a5-tate-no-bleed.$nodo;
+    margin-top: a5-tate-no-bleed.$ten;
+    margin-bottom: a5-tate-no-bleed.$chi;
     break-before: avoid;
     break-after: avoid;
     break-inside: avoid;
@@ -30,7 +32,7 @@
     }
 
     & > .colophon-container {
-      width: 80%;
+      width: 95%;
       break-before: avoid;
       break-after: avoid;
       break-inside: avoid;
@@ -42,7 +44,7 @@
 
       & > .title {
         font-size: 1.25rem;
-        line-height: $base-line-height;
+        line-height: a5-tate-no-bleed.$base-line-height;
         break-after: avoid;
         & span.subtitle {
           font-size: 0.7em;
@@ -126,4 +128,28 @@
   @top-right {
     content: none;
   }
+
+  @right-middle {
+    /* 隠しノンブル */
+    font-size: 4pt;
+    margin-right: -19mm !important;
+    padding: 2px;
+    white-space: pre;
+    -webkit-writing-mode: horizontal-tb;
+    -epub-writing-mode:   horizontal-tb;
+    writing-mode: horizontal-tb;
+    content: counter(page);
+}
+
+@left-middle {
+    /* 隠しノンブル */
+    font-size: 4pt;
+    margin-left: -19mm !important;
+    padding: 2px;
+    white-space: pre;
+    -webkit-writing-mode: horizontal-tb;
+    -epub-writing-mode:   horizontal-tb;
+    writing-mode: horizontal-tb;
+    content: counter(page);
+}
 }

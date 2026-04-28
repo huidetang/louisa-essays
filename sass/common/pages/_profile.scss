@@ -1,11 +1,13 @@
+@use "../../variable/a5-tate-no-bleed";
+
 @charset "UTF-8";
 
 /* 著者紹介 */
 .profile {
     font-size: 0.8em;
-    -webkit-writing-mode: $writing-mode;
-    -epub-writing-mode: $writing-mode;
-    writing-mode: $writing-mode;
+    -webkit-writing-mode: a5-tate-no-bleed.$writing-mode;
+    -epub-writing-mode: a5-tate-no-bleed.$writing-mode;
+    writing-mode: a5-tate-no-bleed.$writing-mode;
   
     div.profile-content{
         width: 100%;

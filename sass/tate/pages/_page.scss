@@ -1,22 +1,24 @@
+@use "../../variable/a5-tate-no-bleed";
+
 @charset "UTF-8";
 
 @page {
-    size: $paper-size;
-    bleed: $bleed-size;
+    size: a5-tate-no-bleed.$paper-size;
+    bleed: a5-tate-no-bleed.$bleed-size;
     // 行送り * 行数
-    width: $content-width;
+    width: a5-tate-no-bleed.$content-width;
     // フォントサイズ * 文字数
-    height: $content-height;
+    height: a5-tate-no-bleed.$content-height;
     // margin: auto;
-    margin-top: $ten;
-    margin-bottom: $chi;
-    marks: $marks;
+    margin-top: a5-tate-no-bleed.$ten;
+    margin-bottom: a5-tate-no-bleed.$chi;
+    marks: a5-tate-no-bleed.$marks;
 }
 
 @page :left {
 
-    margin-right: $nodo;
-    margin-left: $koguchi;
+    margin-right: a5-tate-no-bleed.$nodo;
+    margin-left: a5-tate-no-bleed.$koguchi;
   
     @top-left {
         /* 左上ノンブル、柱（タイトル文字列） */
@@ -45,8 +47,8 @@
 
 @page :right {
 
-    margin-left: $nodo;
-    margin-right: $koguchi;
+    margin-left: a5-tate-no-bleed.$nodo;
+    margin-right: a5-tate-no-bleed.$koguchi;
   
     @top-right {
         /* 右上ノンブル、柱（出版物タイトル文字列） */
@@ -88,7 +90,31 @@
     @top-right {
         content: none;
     }
-  
+
+    @right-middle {
+        /* 隠しノンブル */
+        font-size: 4pt;
+        margin-right: -19mm !important;
+        padding: 2px;
+        white-space: pre;
+        -webkit-writing-mode: horizontal-tb;
+        -epub-writing-mode:   horizontal-tb;
+        writing-mode: horizontal-tb;
+        content: counter(page);
+    }
+
+    @left-middle {
+        /* 隠しノンブル */
+        font-size: 4pt;
+        margin-left: -19mm !important;
+        padding: 2px;
+        white-space: pre;
+        -webkit-writing-mode: horizontal-tb;
+        -epub-writing-mode:   horizontal-tb;
+        writing-mode: horizontal-tb;
+        content: counter(page);
+    }
+
     img {
         max-inline-size: 100%;
         max-block-size: 100vb;
@@ -103,5 +129,29 @@
   
     @top-right {
         content: none;
+    }
+
+    @right-middle {
+        /* 隠しノンブル */
+        font-size: 4pt;
+        margin-right: -19mm !important;
+        padding: 2px;
+        white-space: pre;
+        -webkit-writing-mode: horizontal-tb;
+        -epub-writing-mode:   horizontal-tb;
+        writing-mode: horizontal-tb;
+        content: counter(page);
+    }
+
+    @left-middle {
+        /* 隠しノンブル */
+        font-size: 4pt;
+        margin-left: -19mm !important;
+        padding: 2px;
+        white-space: pre;
+        -webkit-writing-mode: horizontal-tb;
+        -epub-writing-mode:   horizontal-tb;
+        writing-mode: horizontal-tb;
+        content: counter(page);
     }
 }

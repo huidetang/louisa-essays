@@ -9,11 +9,11 @@ prt: 自宅のプリンタ
 direction: "rtl"
 
 # 表紙を作る
-cover: false
-# coverimage: frontcover.png
+cover: cover_print.xhtml
+coverimage: frontcover_print.png
 
 # 裏表紙を作る
-# backcover: backcover.xhtml
+backcover: backcover_print.xhtml
 
 # 大扉は画像で作る
 titlepage: false

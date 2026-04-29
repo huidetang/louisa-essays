@@ -2,7 +2,7 @@ import glob
 from os import getcwd
 from os.path import join
 
-from anshitsu.retouch import Retouch
+from anshitsu.process.Processor import Retouch
 
 from PIL import Image
 

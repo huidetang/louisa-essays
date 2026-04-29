@@ -29,4 +29,4 @@ colophon: colophon.xhtml
 chapterlink: null
 
 # 外部リンクを無効にする
-externallink: false
+# externallink: false
